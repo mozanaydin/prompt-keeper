@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ExternalLink, Trash2, Tag, X, Copy, Check } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Trash2, Tag, X, Copy, Check, Save } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import { extractVariables } from '../utils/variables'
 import VariablesPanel from '../components/VariablesPanel'
@@ -18,7 +18,8 @@ export default function PromptDetailPage() {
   const [tagInput, setTagInput] = useState('')
   const [folderId, setFolderId] = useState(null)
   const [copied, setCopied] = useState(false)
-  const saveTimeout = useRef(null)
+  const [hasChanges, setHasChanges] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (prompt) {
@@ -27,21 +28,24 @@ export default function PromptDetailPage() {
       setSourceUrl(prompt.sourceUrl || '')
       setTags(prompt.tags || [])
       setFolderId(prompt.folderId)
+      setHasChanges(false)
     }
   }, [id]) // eslint-disable-line
 
-  const triggerSave = (updates) => {
-    clearTimeout(saveTimeout.current)
-    saveTimeout.current = setTimeout(() => {
-      editPrompt({ ...prompt, ...updates })
-    }, 600)
-  }
-
   if (!prompt) return <div className="p-8 text-gray-500">Prompt not found.</div>
 
-  const handleDelete = () => {
+  const markChanged = () => setHasChanges(true)
+
+  const handleSave = async () => {
+    setSaving(true)
+    await editPrompt({ ...prompt, title, body, sourceUrl, tags, folderId })
+    setHasChanges(false)
+    setSaving(false)
+  }
+
+  const handleDelete = async () => {
     if (confirm('Delete this prompt?')) {
-      removePrompt(id)
+      await removePrompt(id)
       navigate('/prompts')
     }
   }
@@ -49,17 +53,15 @@ export default function PromptDetailPage() {
   const addTag = (tag) => {
     const cleaned = tag.trim().toLowerCase()
     if (cleaned && !tags.includes(cleaned)) {
-      const next = [...tags, cleaned]
-      setTags(next)
-      triggerSave({ title, body, sourceUrl, tags: next, folderId })
+      setTags(prev => [...prev, cleaned])
+      markChanged()
     }
     setTagInput('')
   }
 
   const removeTag = (tag) => {
-    const next = tags.filter(t => t !== tag)
-    setTags(next)
-    triggerSave({ title, body, sourceUrl, tags: next, folderId })
+    setTags(prev => prev.filter(t => t !== tag))
+    markChanged()
   }
 
   const vars = extractVariables(body)
@@ -77,17 +79,37 @@ export default function PromptDetailPage() {
         <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm">
           <ArrowLeft size={15}/> Back
         </button>
-        <button onClick={handleDelete} className="text-gray-600 hover:text-red-400 transition-colors">
-          <Trash2 size={16}/>
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Save button */}
+          <button
+            onClick={handleSave}
+            disabled={!hasChanges || saving}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+              hasChanges
+                ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                : 'bg-gray-800 text-gray-600 cursor-not-allowed'
+            }`}
+          >
+            <Save size={14}/>
+            {saving ? 'Saving…' : hasChanges ? 'Save' : 'Saved'}
+          </button>
+          <button onClick={handleDelete} className="text-gray-600 hover:text-red-400 transition-colors p-1.5">
+            <Trash2 size={16}/>
+          </button>
+        </div>
       </div>
+
+      {/* Unsaved indicator */}
+      {hasChanges && (
+        <div className="text-xs text-amber-500 mb-3">You have unsaved changes</div>
+      )}
 
       {/* Title */}
       <input
         className="text-2xl font-bold bg-transparent outline-none w-full text-white mb-3 placeholder-gray-700"
         placeholder="Prompt title"
         value={title}
-        onChange={e => { setTitle(e.target.value); triggerSave({ title: e.target.value, body, sourceUrl, tags, folderId }) }}
+        onChange={e => { setTitle(e.target.value); markChanged() }}
       />
 
       {/* Source URL + Folder row */}
@@ -98,13 +120,13 @@ export default function PromptDetailPage() {
             className="bg-transparent text-xs text-gray-400 outline-none w-full placeholder-gray-700"
             placeholder="Source URL (optional)"
             value={sourceUrl}
-            onChange={e => { setSourceUrl(e.target.value); triggerSave({ title, body, sourceUrl: e.target.value, tags, folderId }) }}
+            onChange={e => { setSourceUrl(e.target.value); markChanged() }}
           />
         </div>
         <select
           className="bg-gray-900 border border-gray-800 text-xs text-gray-400 rounded-lg px-2 py-1.5 outline-none"
           value={folderId || ''}
-          onChange={e => { const v = e.target.value || null; setFolderId(v); triggerSave({ title, body, sourceUrl, tags, folderId: v }) }}
+          onChange={e => { setFolderId(e.target.value || null); markChanged() }}
         >
           <option value="">No folder</option>
           {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
@@ -140,7 +162,7 @@ export default function PromptDetailPage() {
         className="w-full min-h-[180px] bg-gray-900 border border-gray-800 rounded-xl p-4 text-sm font-mono text-gray-200 outline-none focus:border-gray-600 resize-y leading-relaxed"
         placeholder="Write your prompt here… use [variable_name] for dynamic parts."
         value={body}
-        onChange={e => { setBody(e.target.value); triggerSave({ title, body: e.target.value, sourceUrl, tags, folderId }) }}
+        onChange={e => { setBody(e.target.value); markChanged() }}
       />
 
       {/* Variables panel or simple copy */}

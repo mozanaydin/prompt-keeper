@@ -14,8 +14,8 @@ export default function Sidebar() {
 
   const allTags = [...new Set(prompts.flatMap(p => p.tags || []))]
 
-  const handleCreatePrompt = () => {
-    const prompt = addPrompt({ title: 'Untitled Prompt', body: '', tags: [], folderId: null, sourceUrl: null })
+  const handleCreatePrompt = async () => {
+    const prompt = await addPrompt({ title: 'Untitled Prompt', body: '', tags: [], folderId: null, sourceUrl: null })
     navigate(`/prompts/${prompt.id}`)
   }
 
@@ -75,7 +75,7 @@ export default function Sidebar() {
                     <Pencil size={13}/> Rename
                   </button>
                   <button
-                    onClick={() => { removeFolder(folder.id); setMenuOpen(null) }}
+                    onClick={async () => { await removeFolder(folder.id); setMenuOpen(null) }}
                     className="flex items-center gap-2 px-3 py-1.5 text-sm w-full hover:bg-gray-700 text-red-400"
                   >
                     <Trash2 size={13}/> Delete
@@ -124,11 +124,11 @@ export default function Sidebar() {
         <FolderModal
           initial={folderModal === 'new' ? null : folderModal}
           onClose={() => setFolderModal(null)}
-          onSave={(name, color) => {
+          onSave={async (name, color) => {
             if (folderModal === 'new') {
-              addFolder({ name, color })
+              await addFolder({ name, color })
             } else {
-              editFolder({ ...folderModal, name, color })
+              await editFolder({ ...folderModal, name, color })
             }
             setFolderModal(null)
           }}

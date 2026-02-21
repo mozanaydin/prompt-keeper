@@ -1,63 +1,76 @@
-const newId = () =>
-  typeof crypto !== 'undefined' && crypto.randomUUID
-    ? crypto.randomUUID()
-    : Math.random().toString(36).slice(2)
-
-const load = (key) => JSON.parse(localStorage.getItem(key) || '[]')
-const save = (key, data) => localStorage.setItem(key, JSON.stringify(data))
+const API = '/api'
 
 // --- Folders ---
-export const getFolders = () => load('folders')
-
-export const saveFolder = (data) => {
-  const folders = getFolders()
-  const folder = { ...data, id: newId(), createdAt: new Date().toISOString() }
-  save('folders', [...folders, folder])
-  return folder
+export const getFolders = async () => {
+  const res = await fetch(`${API}/folders`)
+  return res.json()
 }
 
-export const updateFolder = (updated) => {
-  save('folders', getFolders().map(f => f.id === updated.id ? updated : f))
+export const saveFolder = async (data) => {
+  const res = await fetch(`${API}/folders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  return res.json()
 }
 
-export const deleteFolder = (id) => {
-  save('folders', getFolders().filter(f => f.id !== id))
+export const updateFolder = async (data) => {
+  const res = await fetch(`${API}/folders/${data.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  return res.json()
+}
+
+export const deleteFolder = async (id) => {
+  await fetch(`${API}/folders/${id}`, { method: 'DELETE' })
 }
 
 // --- Prompts ---
-export const getPrompts = () => load('prompts')
-
-export const savePrompt = (data) => {
-  const prompts = getPrompts()
-  const now = new Date().toISOString()
-  const prompt = { ...data, id: newId(), createdAt: now, updatedAt: now }
-  save('prompts', [...prompts, prompt])
-  return prompt
+export const getPrompts = async () => {
+  const res = await fetch(`${API}/prompts`)
+  return res.json()
 }
 
-export const updatePrompt = (updated) => {
-  save('prompts', getPrompts().map(p =>
-    p.id === updated.id ? { ...updated, updatedAt: new Date().toISOString() } : p
-  ))
+export const savePrompt = async (data) => {
+  const res = await fetch(`${API}/prompts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  return res.json()
 }
 
-export const deletePrompt = (id) => {
-  save('prompts', getPrompts().filter(p => p.id !== id))
-  // Also clean up presets for this prompt
-  save('presets', load('presets').filter(pr => pr.promptId !== id))
+export const updatePrompt = async (data) => {
+  const res = await fetch(`${API}/prompts/${data.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  return res.json()
+}
+
+export const deletePrompt = async (id) => {
+  await fetch(`${API}/prompts/${id}`, { method: 'DELETE' })
 }
 
 // --- Presets ---
-export const getPresets = (promptId) =>
-  load('presets').filter(p => p.promptId === promptId)
-
-export const savePreset = (data) => {
-  const presets = load('presets')
-  const preset = { ...data, id: newId(), createdAt: new Date().toISOString() }
-  save('presets', [...presets, preset])
-  return preset
+export const getPresets = async (promptId) => {
+  const res = await fetch(`${API}/presets?promptId=${promptId}`)
+  return res.json()
 }
 
-export const deletePreset = (id) => {
-  save('presets', load('presets').filter(p => p.id !== id))
+export const savePreset = async (data) => {
+  const res = await fetch(`${API}/presets`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  return res.json()
+}
+
+export const deletePreset = async (id) => {
+  await fetch(`${API}/presets/${id}`, { method: 'DELETE' })
 }
