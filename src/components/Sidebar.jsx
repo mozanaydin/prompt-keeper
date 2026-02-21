@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { FolderOpen, Plus, Search, Tag, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { useApp } from '../store/AppContext'
+import { useSearch } from '../store/SearchContext'
 import FolderModal from './modals/FolderModal'
 
 export default function Sidebar() {
   const { folders, prompts, addFolder, editFolder, removeFolder, addPrompt } = useApp()
-  const [search, setSearch] = useState('')
+  const { query: search, setQuery: setSearch } = useSearch()
   const [folderModal, setFolderModal] = useState(null)
   const [menuOpen, setMenuOpen] = useState(null)
   const navigate = useNavigate()
