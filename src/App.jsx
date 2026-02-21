@@ -1,3 +1,17 @@
+import { Routes, Route, Navigate } from 'react-router-dom'
+import Layout from './components/Layout'
+import PromptListPage from './pages/PromptListPage'
+import PromptDetailPage from './pages/PromptDetailPage'
+
 export default function App() {
-  return <div className="min-h-screen bg-gray-950 text-white p-4">Prompt Keeper</div>
+  return (
+    <Layout>
+      <Routes>
+        <Route path="/" element={<Navigate to="/prompts" replace />} />
+        <Route path="/prompts" element={<PromptListPage />} />
+        <Route path="/prompts/:id" element={<PromptDetailPage />} />
+        <Route path="/folder/:folderId" element={<PromptListPage />} />
+      </Routes>
+    </Layout>
+  )
 }
