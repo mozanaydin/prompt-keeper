@@ -7,7 +7,7 @@ import FolderModal from './modals/FolderModal'
 
 export default function Sidebar() {
   const { folders, prompts, addFolder, editFolder, removeFolder, addPrompt } = useApp()
-  const { query: search, setQuery: setSearch } = useSearch()
+  const { query: search, setQuery: setSearch, activeTag, setActiveTag } = useSearch()
   const [folderModal, setFolderModal] = useState(null)
   const [menuOpen, setMenuOpen] = useState(null)
   const navigate = useNavigate()
@@ -92,12 +92,17 @@ export default function Sidebar() {
               </div>
               <div className="flex flex-wrap gap-1.5 px-2 pb-2">
                 {allTags.map(tag => (
-                  <span
+                  <button
                     key={tag}
-                    className="text-xs px-2 py-0.5 rounded-full border border-gray-700 text-gray-400"
+                    onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                    className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                      activeTag === tag
+                        ? 'bg-blue-600 border-blue-500 text-white'
+                        : 'border-gray-700 text-gray-400 hover:border-gray-500'
+                    }`}
                   >
                     {tag}
-                  </span>
+                  </button>
                 ))}
               </div>
             </>

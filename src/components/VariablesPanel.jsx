@@ -13,7 +13,7 @@ export default function VariablesPanel({ promptId, variables, body }) {
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    setPresets(fetchPresets(promptId))
+    fetchPresets(promptId).then(setPresets)
   }, [promptId]) // eslint-disable-line
 
   const resolved = resolvePrompt(body, values)
@@ -28,14 +28,14 @@ export default function VariablesPanel({ promptId, variables, body }) {
     setValues(preset.values)
   }
 
-  const handleSavePreset = (name) => {
-    const preset = addPreset({ promptId, name, values })
+  const handleSavePreset = async (name) => {
+    const preset = await addPreset({ promptId, name, values })
     setPresets(prev => [...prev, preset])
     setShowPresetModal(false)
   }
 
-  const handleDeletePreset = (presetId) => {
-    removePreset(presetId)
+  const handleDeletePreset = async (presetId) => {
+    await removePreset(presetId)
     setPresets(prev => prev.filter(p => p.id !== presetId))
   }
 
